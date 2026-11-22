@@ -85,7 +85,7 @@ html = r"""
 /* ---------- two-column layout ---------- */
 #ROOT_ID .layout {
     display:grid;
-    grid-template-columns:minmax(300px,360px) minmax(0,1fr);
+    grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);
     gap:18px;
     align-items:start;
 }
@@ -115,7 +115,8 @@ html = r"""
 #ROOT_ID .sigcard { --c:#2f6fed; }
 #ROOT_ID .sigcard h3 { color:var(--c); }
 
-#ROOT_ID .tiles { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+#ROOT_ID .tiles { display:grid; grid-template-columns:1fr; gap:8px; }
+#ROOT_ID .tsub { display:grid; grid-template-columns:minmax(170px,210px) minmax(0,1fr); gap:14px; align-items:start; }
 
 #ROOT_ID .tile {
     cursor:pointer;
@@ -247,8 +248,15 @@ html = r"""
 #ROOT_ID.dark .pzbox.p h4 { color:#ff6b6b; }
 
 /* ---------- responsive ---------- */
+@media (max-width:1100px) {
+    #ROOT_ID .layout { grid-template-columns:1fr; }
+}
 @media (max-width:900px) {
     #ROOT_ID .layout { grid-template-columns:1fr; }
+}
+@media (max-width:650px) {
+    #ROOT_ID .tsub { grid-template-columns:1fr; }
+    #ROOT_ID .tiles { grid-template-columns:1fr 1fr; }
 }
 @media (max-width:550px) {
     #ROOT_ID { padding:6px; }
@@ -270,7 +278,15 @@ html = r"""
 
         <div class="colhead">Time domain</div>
 
+        <div class="tsub" id="time_area">
+
         <div class="panel sigcard" id="card_sig"></div>
+
+        <div class="col">
+        <div class="panel sigcard">
+            <h3>Signal information</h3>
+            <div id="info_top"></div>
+        </div>
 
         <div class="panel">
             <h3 style="color:#2f6fed">Signal x(t)</h3>
@@ -284,6 +300,9 @@ html = r"""
                 </label>
             </div>
             <div class="hint">The amplitude axis fits the signal automatically.</div>
+        </div>
+        </div>
+
         </div>
 
     </div>
@@ -344,7 +363,7 @@ const TYPES={
     dsin: {label:"Damped sine<br>e<sup>−at</sup>sin(ω₀t) u(t)",    path:"M2 14 H10 C12 2 15 2 18 14 S23 24 26 14 S30 8 32 14 S35 18 38 14"}
 };
 
-const ORDER=["imp","step","ramp","tn","exp","cos","sin","dcos","dsin"];
+const ORDER=["imp","step","ramp","exp","cos","sin","dcos","tn"];
 
 const PARAMS=[
     {p:"A",label:"Amplitude A",                              types:["imp","step","ramp","tn","exp","cos","sin","dcos","dsin"], min:-20, max:20, step:0.1},
@@ -362,27 +381,29 @@ const view={tmin:-2, tmax:10};
 
 function buildCard(){
 
-    const card=$("#card_sig");
+    const card=$("#time_area");
 
-    let h='<h3>Choose a basic signal x(t)</h3><div class="tiles">';
+    let h='<h3>Choose a signal</h3><div class="tiles">';
 
     ORDER.forEach((id,i)=>{
-        const wide=(ORDER.length%2===1&&i===ORDER.length-1)?' style="grid-column:1 / -1"':'';
+        const wide='';
         h+='<div class="tile" data-type="'+id+'"'+wide+'>'+
            '<svg viewBox="0 0 40 28"><path d="'+TYPES[id].path+
            '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'+
            TYPES[id].label+'</div>';
     });
 
-    h+='</div><div class="formula" id="formula"></div>';
+    h+='</div>';
+    let h2='<div class="formula" id="formula"></div>';
 
     PARAMS.forEach(q=>{
-        h+='<label class="param" data-for="'+q.types.join(" ")+'">'+q.label+
+        h2+='<label class="param" data-for="'+q.types.join(" ")+'">'+q.label+
            '<input type="number" data-p="'+q.p+'" min="'+q.min+'" max="'+q.max+
            '" step="'+q.step+'" value="'+sig[q.p]+'"></label>';
     });
 
-    card.innerHTML=h;
+    $("#card_sig").innerHTML=h;
+    $("#info_top").innerHTML=h2;
 
     card.querySelectorAll(".tile").forEach(el=>{
         el.addEventListener("click",()=>{
@@ -414,7 +435,7 @@ function buildCard(){
 
 function refreshCard(){
 
-    const card=$("#card_sig");
+    const card=$("#time_area");
 
     card.querySelectorAll(".tile").forEach(el=>{
         el.classList.toggle("active",el.dataset.type===sig.type);
